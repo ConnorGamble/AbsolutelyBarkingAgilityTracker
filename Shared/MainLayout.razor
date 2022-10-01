@@ -1,0 +1,36 @@
+﻿@inherits LayoutComponentBase
+
+<RadzenDialog/>
+<RadzenNotification/>
+<div class="sidebar">
+    <NavMenu />
+</div>
+
+<div class="main">
+    <div class="top-row px-4">
+        <a href="https://connorgamble.com" target="_blank">External link</a>
+    </div>
+
+    <div class="content px-4">
+        @Body
+    </div>
+</div>
+
+<style>
+    input {
+        width: 25%;
+        margin: 1% auto;
+        display: block;
+        resize: vertical;
+        padding: 15px;
+        border-radius: 15px;
+        border: 0;
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.06);
+        text-align:center;
+        font-size: large;
+    }
+
+    p{
+        font-size: large;
+    }
+</style>

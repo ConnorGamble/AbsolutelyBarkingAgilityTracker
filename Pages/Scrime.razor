@@ -1,0 +1,76 @@
+﻿@page "/scrime"
+
+@using AbsolutelyBarkingAgilityTracking.Data
+@inject DialogService DialogService
+@inject ClassService ClassService
+@inject EventService EventService
+
+@*
+    Flow of this page
+    1. Prompt the user to pick what race they are currently calling for
+    2. Load the queue of dogs which are coming up
+    3. Click on the row of the dog opens a modal which has 3 buttons. (see sheets)
+    4. Clicking "lock in"/"confirm" will lock in the time and save the result
+*@
+
+<h1>Queue processing</h1>
+
+@if (currentQueue == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div>
+        <RadzenSwitch @bind-Value=@isChecked />
+        <h2>@(@isChecked ? "Full Queue" : "Up Next")</h2>
+    </div>
+    <table class="table queueprocessing">
+        <thead>
+            <tr>
+                <th>Runner name</th>
+                <th>Dog name</th>
+                <th>Run time</th>
+                <th>Faults</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var dogRun in currentQueue)
+            {
+                <tr class="@(@dogRun.HasRan ? "has-ran" : "") clickable" @onclick="@(e => OpenScrimeDialog(dogRun.Id))">
+                    <td>@dogRun.HandlerName</td>
+                    <td>@dogRun.DogName</td>
+                    <td>@dogRun.RunTime</td>
+                    <td>@dogRun.Faults</td>
+                </tr>
+            }
+        </tbody>
+    </table>  
+}
+
+@code {
+    private List<Dog> currentQueue;
+    private bool isChecked = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentQueue = ClassService.GetClassForType(DogClass.Agility, DogHeight.Small, DogLevel.Starters)?.RunningOrder;
+    }
+
+    private async void OpenScrimeDialog(string dogId)
+    {
+        var foundDog = EventService.GetDogById(dogId);
+
+        // TODO: how do we wanna handle a new dog which can't be found?
+
+        await DialogService.OpenAsync<ProcessRunnerDialog>("Processing Runner",
+            new Dictionary<string, object>() { { "foundDog", foundDog } }, 
+            new DialogOptions() { CloseDialogOnEsc = true, CloseDialogOnOverlayClick = true, Resizable = true, Width = "90vw", Height = "90vh"});
+    }
+}
+
+<style>
+    .clickable{
+        cursor: pointer;
+    }
+</style>

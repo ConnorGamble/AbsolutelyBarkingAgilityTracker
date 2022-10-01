@@ -1,0 +1,150 @@
+﻿@page "/adddog"
+
+@using AbsolutelyBarkingAgilityTracking.Data
+@inject EventService EventService
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<h1>Add a Dog</h1>
+
+<div class="align-double-center">
+    <h2>Runner name</h2>
+    <input @bind="newDogName"/>
+</div>
+
+<div class="align-double-center">
+    <h2>Runner dog name</h2>
+    <input @bind="handlerName"/>
+</div>
+
+<div class="align-double-center">
+    <h2>Dog Class</h2>
+    <DogClassDropDown @onchange="DogClassChanged"></DogClassDropDown>
+</div>
+
+<div class="align-double-center">
+    <h2>Register for both Jumping and Agility classes?</h2>
+    <RadzenSwitch @bind-Value=@registerBothClasses />
+</div>
+
+<div class="align-double-center">
+    <h2>Dog Height</h2>
+    <DogHeightDropDown @onchange="DogHeightChange"></DogHeightDropDown>
+</div>
+
+<div class="align-double-center">
+    <h2>Dog Level</h2>
+    <DogLevelDropDown @onchange="DogLevelChange"></DogLevelDropDown>
+</div>
+
+<div class="align-double-center">
+    <h2>Rescue Dog?</h2>
+    <RadzenSwitch @bind-Value=@isRescueDog />
+    <h2>@(isRescueDog ? "Is a rescue ✔" : "Is not a rescue ❌")</h2>
+</div>
+
+<div class="align-double-center">
+    <h2>Gun Dog?</h2>
+    <RadzenSwitch @bind-Value=@isGunDog />
+    <h2>@(isGunDog ? "Is a gun dog ✔" : "Is not a gun dog ❌")</h2>
+</div>
+
+<button class="btn btn-primary" @onclick="AddNewDog">Add New Dog</button>
+
+@code {
+    private string newDogName { get; set; }
+    private string handlerName { get; set; }
+    private string newDogClass { get; set; } = "one class?";
+    private string newDogHeight { get; set; }
+    private string newDogLevel { get; set; }
+    private bool isRescueDog { get; set; }
+    private bool isGunDog { get; set; }
+    private bool registerBothClasses { get; set; }
+
+    private async void AddNewDog()
+    {
+        if (!string.IsNullOrWhiteSpace(newDogName) || !string.IsNullOrWhiteSpace(handlerName))
+        {
+            var hasConfirmed = await DialogService.OpenAsync<AddNewDogDialog>("Confirm new dog",
+                new Dictionary<string, object>() { 
+                    { "dogName", newDogName }, 
+                    { "handlerName", handlerName }, 
+                    { "dogClass", newDogClass }, 
+                    { "dogHeight", newDogHeight }, 
+                    { "dogLevel", newDogLevel }, 
+                    { "isRescue", isRescueDog }, 
+                    { "isGunDog", isGunDog }, 
+                    { "registerBothClasses", registerBothClasses }, 
+                },
+                new DialogOptions() { Resizable = false, Width = "90vw", Height = "90vh", ShowClose = false });
+
+            if(hasConfirmed)
+            {
+                newDogName = string.Empty;
+                handlerName = string.Empty;
+                isRescueDog = false;
+                isGunDog = false;
+                registerBothClasses = false;
+            }
+        }
+    }
+
+    private void DogClassChanged(ChangeEventArgs e)
+    {
+        newDogClass = e.Value.ToString();
+    }
+
+    private void DogHeightChange(ChangeEventArgs e)
+    {
+        newDogHeight = e.Value.ToString();
+    }
+
+    private void DogLevelChange(ChangeEventArgs e)
+    {
+        newDogLevel = e.Value.ToString();
+    }
+}
+
+<style>
+    h2{
+        text-align: center;
+    }
+
+    input{
+        width: 100% !important;
+    }
+
+    .align-double-center {
+        margin: 0 auto;
+        width: 49%;
+        display: inline-block;
+        font-size: large;
+    }
+
+    .custom-select{
+        width: 75%;
+        display: block;
+        margin: auto;
+    }
+
+    .rz-switch {
+        display: block;
+        margin: auto;
+    }
+
+    @@media (max-width: 768px) {
+        .custom-select {
+            width: 100%;
+            display: block;
+            margin: auto;
+        }
+
+        .align-double-center {
+            margin: 0 auto;
+            width: 100%;
+            display: inline-block;
+            font-size: large;
+        }
+    }
+
+</style>

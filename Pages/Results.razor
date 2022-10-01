@@ -1,0 +1,98 @@
+﻿@page "/results"
+
+@using AbsolutelyBarkingAgilityTracking.Data
+@inject ClassService ClassService
+
+<h1>Results</h1>
+
+<DogClassDropDown @onchange="DogClassChanged"></DogClassDropDown>
+<DogHeightDropDown @onchange="DogHeightChanged"></DogHeightDropDown>
+<DogLevelDropDown @onchange="DogLevelChanged"></DogLevelDropDown>
+
+<button class="btn btn-primary" @onclick="SearchResults">Search</button>
+
+@if (runResults == null)
+{
+    <p><em>Please select the class</em></p>
+}
+else
+{
+    if (runResults.Count > 0)
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Placement</th>
+                    <th>Runner</th>
+                    <th>Round 1 (Faults)</th>
+                    <th>Round 1</th>
+                    <th>Round 2 (Faults)</th>
+                    <th>Round 2</th>
+                    <th>Overall (Faults)</th>
+                    <th>Overall</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var runResult in runResults)
+                {
+                    <tr>
+                        <td>@runResult.Place</td>
+                        <td>@runResult.Dog.HandlerName (@runResult.Dog.DogName)</td>
+                        <td>@runResult.Round1.Faults</td>
+                        <td>@runResult.Round1.Time</td>
+                        <td>@runResult.Round2?.Faults</td>
+                        <td>@runResult.Round2?.Time</td>
+                        <td>@runResult.Overall.Faults</td>
+                        <td>@runResult.Overall.Time</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <p>No results found of that class type.</p>
+    }
+}
+
+@code {
+    private List<RunResult> runResults;
+
+    private string DogClass;
+    private string DogHeight;
+    private string DogLevel;
+
+    private void DogClassChanged(ChangeEventArgs e)
+    {
+        DogClass = e.Value.ToString();
+    }
+
+    private void DogHeightChanged(ChangeEventArgs e)
+    {
+        DogHeight = e.Value.ToString();
+    }
+
+    private void DogLevelChanged(ChangeEventArgs e)
+    {
+        DogLevel = e.Value.ToString();
+    }
+
+    //protected override async Task OnInitializedAsync()
+    //{
+    //    runResults = new List<RunResult>();
+    //}
+
+    private void SearchResults()
+    {
+        // Error handling if cannot find the given class, show an error maybe? Modal perhaps?
+        var foundClass = this.ClassService.GetClassForType(this.DogClass, this.DogHeight, this.DogLevel);
+
+        if (foundClass == null)
+        {
+            runResults = new List<RunResult>();
+            return;
+        }
+
+        runResults = foundClass.GetResults();
+    }
+}

@@ -1,0 +1,16 @@
+﻿<select class="custom-select" @onchange="OnChange">
+    <option value="Select" selected disabled="disabled">(Choose Level)</option>
+
+    <option value="Elementary">Elementary</option>
+    <option value="Starters">Starters</option>
+    <option value="Novice">Novice</option>
+    <option value="Senior">Senior</option>
+    <option value="OddsNBods">Odds'n'Bods</option>
+    <option value="Veterans">Veterans</option>
+</select>
+
+@code
+{
+    [Parameter]
+    public EventCallback<ChangeEventArgs> OnChange { get; set; }
+}

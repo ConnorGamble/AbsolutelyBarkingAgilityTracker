@@ -1,0 +1,190 @@
+﻿@page "/CallerPage"
+@using AbsolutelyBarkingAgilityTracking.Data
+@using System.Threading
+@inject EventService EventService
+@inject ClassService ClassService
+@inject DialogService DialogService
+
+<h1>Dog Class</h1>
+
+<DogClassDropDown @onchange="DogClassChanged"></DogClassDropDown>
+
+<h1>Dog Height</h1>
+
+<DogHeightDropDown @onchange="DogHeightChange"></DogHeightDropDown>
+
+<h1>Dog Level</h1>
+
+<DogLevelDropDown @onchange="DogLevelChange"></DogLevelDropDown>
+
+<button class="btn btn-primary" @onclick="GetApplicableDogs">Search</button>
+
+<button class="btn btn-primary" @onclick="PopulateApplicableDogs">MAKE DOGGOS</button>
+
+<div @onclick="ToggleShowQueue">
+    <RadzenSwitch @bind-Value=@ShowCompetableDogs />
+</div>
+
+<h2>@(ShowCompetableDogs ? "Competable dogs" : "Current Queue" )</h2>
+
+@if (ShowCompetableDogs)
+{
+    @if (CompetableDogs == null || !CompetableDogs.Any())
+    {
+        <h1>No dogs are available to compete.</h1>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Handler Name</th>
+                    <th>Dog Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var competableDog in CompetableDogs)
+                {
+                    <tr>
+                        <td>@competableDog.HandlerName</td>
+                        <td>@competableDog.DogName</td>
+                        <td><button class="btn btn-primary" @onclick="@(e => AddDogToQueue(competableDog.Id))">Add to Queue</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+else
+{
+    @if (DogsInQueue == null || !DogsInQueue.Any())
+    {
+        <h1>No dogs currently in the queue.</h1>
+    }
+    else
+    {
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Handle Name</th>
+                    <th>Dog Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dogInQueue in DogsInQueue)
+                {
+                    <tr>
+                        <td>@dogInQueue.HandlerName</td>
+                        <td>@dogInQueue.DogName</td>
+                        <td><button class="btn btn-primary" @onclick="@(e => RemoveDogFromQueue(dogInQueue.Id))">Remove from queue</button></td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+}
+
+@code {
+    public bool ShowCompetableDogs { get; set; }
+    private string newDogClass { get; set; }
+    private string newDogHeight { get; set; }
+    private string newDogLevel { get; set; }
+    private List<Dog> DogsInQueue { get; set; }
+    private List<Dog> CompetableDogs { get; set; }
+
+    private void GetApplicableDogs()
+    {
+        CompetableDogs = EventService.GetCompetingDogsOfType(newDogHeight, newDogLevel, newDogClass);
+    }
+
+    private async void AddDogToQueue(string dogId)
+    {
+        // TODO: if the dog can't be found, show an error dialog? 
+        var dogToAddToQueue = CompetableDogs.Where(x => x.Id == dogId).SingleOrDefault();
+        if (dogToAddToQueue == null)
+            return;
+
+        // Shouldn't ever be null, but what if?
+        //if(dogToAddToQueue == null)
+        //{
+
+        //}
+
+        var shouldContinue = await ShowConfirmDialogue(dogToAddToQueue);
+        if (!shouldContinue)
+            return;
+
+        if (DogsInQueue == null)
+            DogsInQueue = new List<Dog>();
+
+        // This calls the class service passing in the dog, and deets about it, updating the dogs
+        ClassService.AddDogToRunningQueue(newDogClass, newDogHeight, newDogLevel, dogToAddToQueue);
+
+        RefreshQueue();
+    }
+
+    private async void RemoveDogFromQueue(string dogId)
+    {
+        var dogToRemoveFromQueue = CompetableDogs.Where(x => x.Id == dogId).SingleOrDefault();
+        if (dogToRemoveFromQueue == null)
+            return;
+
+        var shouldContinue = await ShowConfirmDialogue(dogToRemoveFromQueue, false);
+        if (!shouldContinue)
+            return;
+
+        if (DogsInQueue == null)
+            DogsInQueue = new List<Dog>();
+
+        ClassService.RemoveDogFromRunningQueue(newDogClass, newDogHeight, newDogLevel, dogId);
+
+        // TODO: When removing dogs, the list doesn't immidiately remove the dog which has been shown
+        RefreshQueue();
+    }
+
+    private async Task<bool> ShowConfirmDialogue(Dog dogToProcess, bool isAddingDogToQueue = true)
+    {
+        var dialogContent = $"Are you sure you want to add {dogToProcess.DogName} and {dogToProcess.HandlerName} to the queue?";
+        if (!isAddingDogToQueue)
+            dialogContent = $"Are you sure you want to remove {dogToProcess.DogName} and {dogToProcess.HandlerName} from the queue?";
+
+        var addToQueue = await DialogService.Confirm(dialogContent, "Confirm dialog", new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+        if (addToQueue == null)
+            return false;
+
+        return addToQueue.Value;
+    }
+
+    private void ToggleShowQueue()
+    {
+        RefreshQueue();
+    }
+
+    private void RefreshQueue()
+    {
+        DogsInQueue = ClassService.GetClassForType(newDogClass, newDogHeight, newDogLevel)?.RunningOrder;
+    }
+
+    // DEBUG
+    private void PopulateApplicableDogs()
+    {
+        CompetableDogs = Helpers.GenerateListOfDogs(250);
+    }
+
+    // DEBUG
+
+    private void DogClassChanged(ChangeEventArgs e)
+    {
+        newDogClass = e.Value.ToString();
+    }
+
+    private void DogHeightChange(ChangeEventArgs e)
+    {
+        newDogHeight = e.Value.ToString();
+    }
+
+    private void DogLevelChange(ChangeEventArgs e)
+    {
+        newDogLevel = e.Value.ToString();
+    }
+}

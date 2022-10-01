@@ -1,0 +1,11 @@
+﻿<select class="custom-select" @onchange="OnChange">
+    <option value="Select" selected disabled="disabled">(Choose Class)</option>
+    <option value="Agility">Agility</option>
+    <option value="Jumping">Jumping</option>
+</select>
+
+@code
+{
+    [Parameter]
+    public EventCallback<ChangeEventArgs> OnChange { get; set; }
+}

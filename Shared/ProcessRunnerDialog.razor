@@ -1,0 +1,143 @@
+﻿@using AbsolutelyBarkingAgilityTracking.Data
+@using System.Globalization
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject ClassService ClassService
+
+<div style="width:100%; height:100%;">
+    <p class="mb-4 handler-and-dog-name"><b>@foundDog.HandlerName - @foundDog.DogName</b></p>
+    <RadzenButton Text="5F" Class="mr-1 align-double-center " Click="() => AddFiveFaults()" ButtonStyle="ButtonStyle.Warning" />
+    <RadzenButton Text="5R" Class="mr-1 align-double-center " Click="() => AddRefusal()" ButtonStyle="ButtonStyle.Warning" />
+
+    <p class="mb-4 faults-text">Total faults:</p>
+    <input type="number" @bind="totalFaults" placeholder="0"/>
+
+    <p class="mb-4 faults-text @(totalRefusals >= 3 ? "eliminated" : "")">Total refusals: <b>@totalRefusals</b></p>
+    <p class="mb-4 faults-text"><b>Refusals are automatically added to the total faults.</b></p>
+
+    <p class="mb-4 faults-text">Total Time:</p>
+    <input type="number" @bind="totalTime" placeholder="Format: 12.345" />
+    <RadzenButton Text="Submit" Class="mr-1" Click="() => ConfirmResult()" ButtonStyle="ButtonStyle.Dark" />
+
+    <div class="align-bottom">
+        <RadzenButton Text="Elimination" Class="mr-1 align-double-center " Click="() => ConfirmElimination()" ButtonStyle="ButtonStyle.Danger" />
+        <RadzenButton Text="Cancel" Class="mr-1 align-double-center" Click="() => Close()" ButtonStyle="ButtonStyle.Dark" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Dog foundDog { get; set; }
+
+    public string totalTime { get; set; }
+    public int totalFaults { get; set; } = 0;
+    public int totalRefusals { get; set; } = 0;
+
+    public void AddFiveFaults()
+    {
+        totalFaults += 5;
+    }
+
+    public void AddRefusal()
+    {
+        AddFiveFaults();
+        totalRefusals++;
+    }
+
+    public void Close()
+    {
+        DialogService.Close();
+    }
+
+    public void ConfirmResult()
+    {
+        if(CheckTimeIsVaild())
+        {
+            ClassService.CreateResultForDog(foundDog, totalTime, totalFaults);
+        }
+
+    }
+
+    public void ConfirmElimination()
+    {
+        if(CheckTimeIsVaild())
+        {
+            ClassService.CreateResultForDog(foundDog, totalTime, totalFaults, true);
+        }
+    }
+
+    private bool CheckTimeIsVaild()
+    {
+        if (totalTime == null)
+        {
+            SendNotification("Please ensure that a valid time is being supplied.");
+            return false;
+        }
+
+        if (decimal.TryParse(totalTime, NumberStyles.None, CultureInfo.InvariantCulture, out _))
+        {
+            SendNotification("Check the format of your time to ensure it's as a decimal.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void SendNotification(string detail)
+    {
+        NotificationService.Notify(new NotificationMessage()
+        {
+            Severity = NotificationSeverity.Error,
+            Summary = "Invalid time!",
+            Detail = detail,
+            Duration = 3000
+        });
+    }
+}
+
+<style>
+    input {
+        width: 25%;
+        margin: 1% auto;
+        display: block;
+        resize: vertical;
+        padding: 15px;
+        border-radius: 15px;
+        border: 0;
+        box-shadow: 4px 4px 10px rgba(0,0,0,0.06);
+        text-align:center;
+        font-size: large;
+    }
+
+    p{
+        font-size: large;
+    }
+    
+    .align-bottom {
+        bottom: 0px;
+        position: absolute;
+        width: 98%;
+        margin-bottom: 1%;
+    }
+
+    .align-double-center {
+        margin: 0 auto;
+        width: 49%;
+        display: inline-block;
+        font-size: large;
+    }
+
+    .handler-and-dog-name {
+        text-align: center;
+    }
+
+    .faults-text {
+        text-align: center;
+        margin-top: 1%;
+    }
+
+    .eliminated{
+        color: red;
+    }
+
+</style>

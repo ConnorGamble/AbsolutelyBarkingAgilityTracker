@@ -1,0 +1,14 @@
+﻿<select class="custom-select" @onchange="OnChange">
+    <option value="Select" selected disabled="disabled">(ChooseHeight)</option>
+    <option value="Large">Large</option>
+    <option value="Standard">Standard</option>
+    <option value="Medium">Medium</option>
+    <option value="Small">Small</option>
+    <option value="Toy">Toy</option>
+</select>
+
+@code
+{
+    [Parameter]
+    public EventCallback<ChangeEventArgs> OnChange { get; set; }
+}

@@ -1,0 +1,130 @@
+﻿@using AbsolutelyBarkingAgilityTracking.Data
+@using System.Globalization
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+@inject EventService EventService
+
+<div style="width:100%; height:100%;">
+    <div class="info-container">
+        <p class="mb-4 handler-and-dog-name">Dog Name: <b>@dogName</b></p>
+        <p class="mb-4 handler-and-dog-name">Handler Name: <b>@handlerName</b></p>
+        <p class="mb-4 handler-and-dog-name">Dog Class: <b>@(registerBothClasses ? "Agility and Jumping" : dogClass)</b></p>
+        <p class="mb-4 handler-and-dog-name">Dog Height: <b>@dogHeight</b></p>
+        <p class="mb-4 handler-and-dog-name">Dog Level: <b>@dogLevel</b></p>
+        <p class="mb-4 handler-and-dog-name">Is Rescue Dog: @(isRescue ? "✔" : "❌")</p>
+        <p class="mb-4 handler-and-dog-name">Is Gun Dog: @(isGunDog ? "✔" : "❌")</p>
+
+        <div class="align-bottom buttons">
+            <RadzenButton Text="Confirm" Class="mr-1 align-double-center first-button" Click="() => Confirm()" ButtonStyle="ButtonStyle.Success" />
+            <RadzenButton Text="Cancel" Class="mr-1 align-double-center" Click="() => Close()" ButtonStyle="ButtonStyle.Dark" />
+        </div>
+    </div>
+
+
+</div>
+
+@code {
+    [Parameter]
+    public string dogName { get; set; }
+    [Parameter]
+    public string handlerName { get; set; }
+    [Parameter]
+    public string dogClass { get; set; }
+    [Parameter]
+    public string dogHeight { get; set; }
+    [Parameter]
+    public string dogLevel { get; set; }
+    [Parameter]
+    public bool isRescue { get; set; }
+    [Parameter]
+    public bool isGunDog { get; set; }
+    [Parameter]
+    public bool registerBothClasses { get; set; }
+    
+
+    public void Confirm()
+    {
+        // TODO: if register both classes is true...
+        EventService.AddNewCompetingDog(dogName, handlerName, dogClass, dogLevel, dogHeight, isGunDog, isRescue);
+
+        NotificationService.Notify(new NotificationMessage()
+        {
+            Severity = NotificationSeverity.Success,
+            Summary = $"{dogName} has entered the show.",
+            Detail = $"{dogName} and {handlerName} have been checked in. 🐶",
+            Duration = 3000
+        });
+
+        DialogService.Close(true);
+    }
+
+    public void Close()
+    {
+        DialogService.Close(false);
+    }
+}
+
+<style>
+    p{
+        font-size: large;
+    }
+
+    .rz-dialog-content
+    {
+        height: 100%
+    }
+    
+    .align-bottom {
+        bottom: 0px;
+        width: 100%;
+        margin-bottom: 1%;
+    }
+
+    .align-double-center {
+        margin: 0 auto;
+        width: 49%;
+        display: inline-block;
+        font-size: large;
+    }
+
+    .info-container{
+        height: 90%;
+    }
+
+    .buttons {
+        height: 10%;
+    }
+
+
+    @@media (max-width: 768px) {
+        .align-double-center {
+            margin: 0 auto;
+            width: 100%;
+            display: inline-block;
+            font-size: large;
+            margin-bottom: 24px !important;
+        }
+
+        .handler-and-dog-name {
+            margin-bottom: 0px;
+        }
+
+        .first-button{
+            margin-bottom: 10px !important;
+        }
+    }
+
+    .handler-and-dog-name {
+        text-align: center;
+    }
+
+    .faults-text {
+        text-align: center;
+        margin-top: 1%;
+    }
+
+    .eliminated{
+        color: red;
+    }
+
+</style>
